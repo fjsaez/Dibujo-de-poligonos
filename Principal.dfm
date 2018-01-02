@@ -14,6 +14,7 @@ object FPrinc: TFPrinc
   OldCreateOrder = False
   WindowState = wsMaximized
   OnResize = FormResize
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object PB1: TPaintBox
@@ -39,7 +40,7 @@ object FPrinc: TFPrinc
     ExplicitWidth = 105
     ExplicitHeight = 105
   end
-  object Panel1: TPanel
+  object Panel: TPanel
     Left = 0
     Top = 0
     Width = 726
@@ -52,16 +53,16 @@ object FPrinc: TFPrinc
       726
       42)
     object SBAbrir: TSpeedButton
-      Left = 64
-      Top = 8
+      Left = 40
+      Top = 10
       Width = 81
       Height = 22
       Caption = 'Abrir CSV'
       OnClick = SBAbrirClick
     end
     object SpeedButton1: TSpeedButton
-      Left = 688
-      Top = 8
+      Left = 691
+      Top = 10
       Width = 23
       Height = 22
       Hint = 'Acerca...'
@@ -71,8 +72,17 @@ object FPrinc: TFPrinc
       ShowHint = True
       OnClick = SpeedButton1Click
     end
+    object SBLista: TSpeedButton
+      Left = 144
+      Top = 10
+      Width = 121
+      Height = 22
+      Caption = 'Lista de coordenadas'
+      Enabled = False
+      OnClick = SBListaClick
+    end
     object CBNumPtos: TCheckBox
-      Left = 184
+      Left = 352
       Top = 13
       Width = 129
       Height = 17
@@ -81,6 +91,7 @@ object FPrinc: TFPrinc
       Enabled = False
       State = cbChecked
       TabOrder = 0
+      Visible = False
       OnClick = CBNumPtosClick
     end
   end

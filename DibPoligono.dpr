@@ -20,7 +20,9 @@ uses
   Principal in 'Principal.pas' {FPrinc},
   Vcl.Themes,
   Vcl.Styles,
-  ABOUT in 'About.pas' {AboutBox};
+  About in 'About.pas' {AboutBox},
+  ListaCoords in 'ListaCoords.pas' {FListaCoords},
+  UtilDibujo in 'UtilDibujo.pas';
 
 {$R *.res}
 
@@ -29,6 +31,5 @@ begin
   Application.MainFormOnTaskbar := True;
   Application.Title := 'Dibujo de polígonos v1.0';
   Application.CreateForm(TFPrinc, FPrinc);
-  Application.CreateForm(TAboutBox, AboutBox);
   Application.Run;
 end.
