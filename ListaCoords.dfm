@@ -21,7 +21,6 @@ object FListaCoords: TFListaCoords
     Height = 41
     Align = alBottom
     TabOrder = 0
-    ExplicitWidth = 367
     object Button1: TButton
       Left = 166
       Top = 8
@@ -57,6 +56,10 @@ object FListaCoords: TFListaCoords
     ScrollBars = ssVertical
     TabOrder = 1
     OnDrawCell = SGridDrawCell
+    ColWidths = (
+      130
+      130
+      130)
     RowHeights = (
       24)
   end

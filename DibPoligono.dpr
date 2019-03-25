@@ -29,7 +29,7 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.Title := 'Dibujo de polígonos v1.0';
+  Application.Title := 'Dibujo de polígonos v1.0.1.0';
   Application.CreateForm(TFPrinc, FPrinc);
   Application.Run;
 end.

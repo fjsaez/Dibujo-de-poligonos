@@ -17,6 +17,7 @@ type
     SBar: TStatusBar;
     SpeedButton1: TSpeedButton;
     SBLista: TSpeedButton;
+    ChBPuntero: TCheckBox;
     procedure SBAbrirClick(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure PB1Paint(Sender: TObject);
@@ -24,11 +25,14 @@ type
     procedure CBNumPtosClick(Sender: TObject);
     procedure SBListaClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure PB1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure ChBPunteroClick(Sender: TObject);
   private
     { Private declarations }
     procedure DibujarRejilla;
     procedure LimpiarPaintBox;
-    procedure InvertirCoordenadas(Canv: TCanvas);
+    procedure InvertirCoordenadas(Canv: TCanvas; Alto,PosY: integer);
+    //procedure ObtenerRangoCoord(Rng: TRango);
   public
     { Public declarations }
   end;
@@ -36,6 +40,8 @@ type
 var
   FPrinc: TFPrinc;
   Prm: TParametros;
+  PtoGeo: TPoint;
+  Rango: TRango;
 
 implementation
 
@@ -50,16 +56,16 @@ begin
   PB1.Canvas.FillRect(PB1.Canvas.ClipRect);
 end;
 
-procedure TFPrinc.InvertirCoordenadas(Canv: TCanvas);
+procedure TFPrinc.InvertirCoordenadas(Canv: TCanvas; Alto,PosY: integer);
 var
-  Org,Ext: TPoint;
+  aHandle : HDC;
 begin
-  Org:=Point(0,ClientHeight);
-  Ext:=Point(1,-1);
-  SetMapMode(Canv.Handle,mm_Anisotropic);
-  SetWindowOrgEx(Canv.Handle,Org.X,Org.Y,nil);
-  SetViewportExtEx(Canv.Handle,ClientWidth,ClientHeight,nil);
-  SetWindowExtEx(Canv.Handle,Ext.X*ClientWidth,Ext.Y*ClientHeight,nil);
+  aHandle:=Canv.Handle;
+// set Mapmode
+  SetMapMode(aHandle,MM_ANISOTROPIC);
+  SetWindowExtEx(aHandle,10000,-10000,nil);
+  SetViewportExtEx(aHandle,10000,10000,nil);
+  SetViewportOrgEx(aHandle,0,(PosY*2)+Alto-1,nil);
 end;
 
 procedure TFPrinc.CBNumPtosClick(Sender: TObject);
@@ -67,77 +73,88 @@ begin
   Poligono.PegarImagen(PB1.Canvas,CBNumPtos.Checked);
 end;
 
+procedure TFPrinc.ChBPunteroClick(Sender: TObject);
+begin
+  if not ChBPuntero.Checked then
+  begin
+    SBar.Panels[4].Text:='';
+    SBar.Panels[5].Text:='';
+    SBar.Panels[4].Width:=0;
+    SBar.Panels[5].Width:=0;
+  end;
+end;
+
 procedure TFPrinc.DibujarRejilla;
 var
-  X1,Y1,X2,Y2,         //rango de coords donde se enmarcarán los dibujos
-  PosX,PosY,           //variables de prueba solamente
-  Intervalo,Mayor,InicioX,InicioY: integer;
+  EsqIzq,EsqDer,Inicio,Posc: TPoint;
+  Intervalo,Mayor: integer;
 begin
-  if Poligono.PoliAncho>Poligono.PoliAlto then Mayor:=Poligono.PoliAncho
-                                          else Mayor:=Poligono.PoliAlto;
+  if Poligono.PoliAncho>Poligono.PoliAlto then
+    Mayor:=Poligono.PoliAncho
+  else Mayor:=Poligono.PoliAlto;
   //esto es una prueba mientras se me ocurre algo mejor. mejorar este método:
-  Intervalo:=0;
+  Intervalo:=10;
   if (Mayor>=50) and (Mayor<=100) then Intervalo:=10;
   if (Mayor>100) and (Mayor<=500) then Intervalo:=100;
-  if (Mayor>500) and (Mayor<=1000) then Intervalo:=500;
-  if (Mayor>1000) and (Mayor<=10000) then Intervalo:=1000;
+  if (Mayor>500) and (Mayor<=1000) then Intervalo:=200;
+  if (Mayor>1000) and (Mayor<=5000) then Intervalo:=500;
+  if (Mayor>5000) and (Mayor<=10000) then Intervalo:=1000;
   if (Mayor>10000) then Intervalo:=2000;
   //las esquinas del cuadro:
-  X1:=Poligono.MargenX div 2;
-  Y1:=Poligono.MargenY;
-  X2:=Poligono.AnchoPaintBox-(Poligono.MargenX div 2);
-  Y2:=Poligono.AltoPaintBox;
+  EsqIzq:=Poligono.EsqIzq;
+  EsqDer:=Poligono.EsqDer;
   //las fuentes y color de líneas:
   PB1.Canvas.Pen.Color:=clSilver;
   PB1.Canvas.Font.Size:=7;
   PB1.Canvas.Font.Color:=clBlue;
   //se determina el punto donde comienzan a trazarse las verticales:
-  InicioX:=Poligono.PoliMenorX;
-  while InicioX mod Intervalo <> 0 do InicioX:=InicioX-1;
-  PosX:=Poligono.CoordGeoACanvas(InicioX,1);
+  Inicio.X:=Poligono.PoliMenor.X;
+  while Inicio.X mod Intervalo <> 0 do Inicio.X:=Inicio.X-1;
+  Posc.X:=Poligono.CoordGeoACanvas(Inicio.X,1);
   //se busca la coord Y inicial:
-  while Poligono.CoordGeoACanvas(InicioX-Intervalo,1)>X1 do
+  while Poligono.CoordGeoACanvas(Inicio.X-Intervalo,1)>EsqIzq.X do
   begin
-    InicioX:=InicioX-Intervalo;
-    PosX:=Poligono.CoordGeoACanvas(InicioX,1);
+    Inicio.X:=Inicio.X-Intervalo;
+    Posc.X:=Poligono.CoordGeoACanvas(Inicio.X,1);
   end;
   //se trazan las líneas verticales:
-  while PosX<X2 do
+  while Posc.X<EsqDer.X do
   begin
-    PB1.Canvas.MoveTo(PosX,Y2);
-    PB1.Canvas.LineTo(PosX,Y1);
-    PB1.Canvas.TextOut(PosX-(PB1.Canvas.TextWidth(IntToStr(InicioX)) div 2),
-                       Y1,IntToStr(InicioX));
-    PB1.Canvas.TextOut(PosX-(PB1.Canvas.TextWidth(IntToStr(InicioX)) div 2),
-             Y2+PB1.Canvas.TextHeight(IntToStr(InicioX)),IntToStr(InicioX));
-    InicioX:=InicioX+Intervalo;
-    PosX:=Poligono.CoordGeoACanvas(InicioX,1);
+    PB1.Canvas.MoveTo(Posc.X,EsqDer.Y);
+    PB1.Canvas.LineTo(Posc.X,EsqIzq.Y);
+    PB1.Canvas.TextOut(Posc.X-(PB1.Canvas.TextWidth(Inicio.X.ToString) div 2),
+                       EsqIzq.Y,Inicio.X.ToString);
+    PB1.Canvas.TextOut(Posc.X-(PB1.Canvas.TextWidth(Inicio.X.ToString) div 2),
+      EsqDer.Y+PB1.Canvas.TextHeight(Inicio.X.ToString),Inicio.X.ToString);
+    Inicio.X:=Inicio.X+Intervalo;
+    Posc.X:=Poligono.CoordGeoACanvas(Inicio.X,1);
   end;
   //se determina el punto donde comienzan a trazarse las horizontales:
-  InicioY:=Poligono.PoliMenorY;
-  while InicioY mod Intervalo<>0 do InicioY:=InicioY-1;
-  PosY:=Poligono.CoordGeoACanvas(InicioY,2);
+  Inicio.Y:=Poligono.PoliMenor.Y;
+  while Inicio.Y mod Intervalo<>0 do Inicio.Y:=Inicio.Y-1;
+  Posc.Y:=Poligono.CoordGeoACanvas(Inicio.Y,2);
   //se busca la coord X inicial:
-  while Poligono.CoordGeoACanvas(InicioY-Intervalo,2)>Y1 do
+  while Poligono.CoordGeoACanvas(Inicio.Y-Intervalo,2)>EsqIzq.Y do
   begin
-    InicioY:=InicioY-Intervalo;
-    PosY:=Poligono.CoordGeoACanvas(InicioY,2);
+    Inicio.Y:=Inicio.Y-Intervalo;
+    Posc.Y:=Poligono.CoordGeoACanvas(Inicio.Y,2);
   end;
   //se trazan las líneas horizontales:
-  while PosY<Y2 do
+  while Posc.Y<EsqDer.Y do
   begin
-    PB1.Canvas.MoveTo(X1,PosY);
-    PB1.Canvas.LineTo(X2,PosY);
-    PB1.Canvas.TextOut(X1-(PB1.Canvas.TextWidth(IntToStr(InicioY)))-2,
-      PosY+(PB1.Canvas.TextHeight(IntToStr(InicioY)) div 2),IntToStr(InicioY));
-    PB1.Canvas.TextOut(X2+2,PosY+(PB1.Canvas.TextHeight(IntToStr(InicioY)) div 2),
-                       IntToStr(InicioY));
-    InicioY:=InicioY+Intervalo;
-    PosY:=Poligono.CoordGeoACanvas(InicioY,2);
+    PB1.Canvas.MoveTo(EsqIzq.X,Posc.Y);
+    PB1.Canvas.LineTo(EsqDer.X,Posc.Y);
+    PB1.Canvas.TextOut(EsqIzq.X-(PB1.Canvas.TextWidth(Inicio.Y.ToString))-2,
+      Posc.Y+(PB1.Canvas.TextHeight(Inicio.Y.ToString) div 2),Inicio.Y.ToString);
+    PB1.Canvas.TextOut(EsqDer.X+2,Posc.Y+(PB1.Canvas.TextHeight(Inicio.Y.ToString) div 2),
+                       Inicio.Y.ToString);
+    Inicio.Y:=Inicio.Y+Intervalo;
+    Posc.Y:=Poligono.CoordGeoACanvas(Inicio.Y,2);
   end;
   //el marco:
   PB1.Canvas.Pen.Color:=clBlack;
-  PB1.Canvas.Rectangle(X1,Y1,X2,Y2);
+  PB1.Canvas.Rectangle(EsqIzq.X,EsqIzq.Y,EsqDer.X,EsqDer.Y);
+  Poligono.ObtenerRangoCoord(Rango);
 end;
 
 procedure ExtraeCSV(Lista: TStringList; var VLista: array of TCoord);
@@ -160,13 +177,35 @@ end;
 
 procedure TFPrinc.FormResize(Sender: TObject);
 begin
-  SBar.Panels[0].Text:=' Resolución de pantalla: '+IntToStr(Screen.Width)+' x '+
-                       IntToStr(Screen.Height);
+  SBar.Panels[0].Text:=' Resolución pantalla: '+Screen.Width.ToString+' x '+
+                       Screen.Height.ToString;
+  SBar.Panels[0].Width:=SBar.Canvas.TextWidth(SBar.Panels[0].Text)+20;
 end;
 
 procedure TFPrinc.FormShow(Sender: TObject);
 begin
   Panel.Color:=$FDE9D9;
+end;
+
+procedure TFPrinc.PB1MouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+var
+  Pos: TPoint;
+  Ancho: byte;
+begin
+  Pos.X:=Rango.Inicio.X+Round(X*Rango.Proporcion);
+  Pos.Y:=Rango.Fin.Y-Round(Y*Rango.Proporcion);
+  SBar.Panels[4].Text:='';
+  SBar.Panels[5].Text:='';
+  Ancho:=0;
+  if ChBPuntero.Checked then
+  begin
+    SBar.Panels[4].Text:=' Coords geográficas: '+Pos.X.ToString+','+Pos.Y.ToString;
+    SBar.Panels[5].Text:=' Coords canvas: '+X.ToString+','+Y.ToString;
+    Ancho:=20;
+  end;
+  SBar.Panels[4].Width:=SBar.Canvas.TextWidth(SBar.Panels[4].Text)+Ancho;
+  SBar.Panels[5].Width:=SBar.Canvas.TextWidth(SBar.Panels[5].Text)+Ancho;
 end;
 
 procedure TFPrinc.PB1Paint(Sender: TObject);
@@ -175,28 +214,25 @@ var
 begin
   if Assigned(Poligono) then
   begin
-    InvertirCoordenadas(PB1.Canvas);
     LimpiarPaintBox;
+    InvertirCoordenadas(PB1.Canvas,PB1.Height,PB1.Top);
     DibujarRejilla;
-    with PB1.Canvas do
+    //dibujo y relleno del polígono:
+    PB1.Canvas.Brush.Color:=clSkyBlue;
+    PB1.Canvas.Brush.Style:=bsDiagCross;
+    PB1.Canvas.Pen.Color:=clBlack;
+    PB1.Canvas.Polygon(Poligono.PtoDib);
+    InvertirCoordenadas(Poligono.ImgSNum.Canvas,PB1.Height,PB1.Top);
+    Poligono.CopiarImagen(PB1.Canvas,Poligono.ImgSNum.Canvas);
+    //numeración de los puntos:
+    if CBNumPtos.Checked then
     begin
-      //dibujo y relleno del polígono:
-      PB1.Canvas.Brush.Color:=clSkyBlue;
-      PB1.Canvas.Brush.Style:=bsDiagCross;
-      PB1.Canvas.Pen.Color:=clBlack;
-      PB1.Canvas.Polygon(Poligono.PtoDib);
-      InvertirCoordenadas(Poligono.ImgSNum.Canvas);
-      Poligono.CopiarImagen(PB1.Canvas,Poligono.ImgSNum.Canvas);
-      //numeración de los puntos:
-      if CBNumPtos.Checked then
-      begin
-        PB1.Canvas.Font.Color:=clRed;
-        PB1.Canvas.Font.Size:=7;
-        for I:=0 to Poligono.TotalPuntos-1 do
-          TextOut(Poligono.PtoDib[I].X,Poligono.PtoDib[I].Y,' V'+IntToStr(I+1));
-        InvertirCoordenadas(Poligono.ImgCNum.Canvas);
-        Poligono.CopiarImagen(PB1.Canvas,Poligono.ImgCNum.Canvas);
-      end;
+      PB1.Canvas.Font.Color:=clRed;
+      PB1.Canvas.Font.Size:=7;
+      for I:=0 to Poligono.TotalPuntos-1 do
+        PB1.Canvas.TextOut(Poligono.PtoDib[I].X,Poligono.PtoDib[I].Y,' V'+IntToStr(I+1));
+      InvertirCoordenadas(Poligono.ImgCNum.Canvas,PB1.Height,PB1.Top);
+      Poligono.CopiarImagen(PB1.Canvas,Poligono.ImgCNum.Canvas);
     end;
   end;
 end;
@@ -211,6 +247,7 @@ begin
   begin
     try
       Caption:=Application.Title+'  -  '+OpenDlg.FileName;
+      ChBPuntero.Visible:=true;
       CBNumPtos.Checked:=true;
       SetLength(Lista,0);
       FreeAndNil(Poligono);
@@ -235,15 +272,13 @@ begin
       Poligono:=TPoligono.CrearPoligono(Prm);
       CBNumPtos.Enabled:=true;
       SBLista.Enabled:=true;
-      SBar.Panels[1].Text:=' Resolución área de dibujo: '+
-      IntToStr(Poligono.AnchoPantalla)+' x '+IntToStr(Poligono.AltoPantalla);
-      SBar.Panels[2].Text:=' X Menor: '+IntToStr(Poligono.PoliMenorX)+
-                           ' / X Mayor: '+IntToStr(Poligono.PoliMayorX)+
-                           ' / Ancho: '+IntToStr(Poligono.PoliAncho);
-      SBar.Panels[3].Text:=' Y Menor: '+IntToStr(Poligono.PoliMenorY)+
-                           ' / Y Mayor: '+IntToStr(Poligono.PoliMayorY)+
-                           ' / Alto: '+IntToStr(Poligono.PoliAlto);
-      SBar.Panels[4].Text:=' Total vértices: '+IntToStr(Poligono.TotalPuntos);
+      SBar.Panels[1].Text:=' Área dibujo: '+
+        IntToStr(Poligono.AnchoPantalla)+' x '+IntToStr(Poligono.AltoPantalla);
+      SBar.Panels[2].Text:=' Dimensiones polígono: '+
+        IntToStr(Poligono.PoliAncho)+' x '+IntToStr(Poligono.PoliAlto)+' ';
+      SBar.Panels[3].Text:=' Vértices: '+IntToStr(Poligono.TotalPuntos);
+      for I:=1 to 3 do
+        SBar.Panels[I].Width:=SBar.Canvas.TextWidth(SBar.Panels[I].Text)+20;
     finally
       CSV.Free;
     end;
@@ -260,4 +295,4 @@ begin
   MostrarVentana(TAboutBox);
 end;
 
-end.      //387
+end.      //387    298

@@ -6,50 +6,51 @@ uses
   System.Types, Vcl.Graphics, Vcl.Forms;
 
 type
+  TRango = record
+    Inicio,Fin: TPoint;
+    Ancho,Alto: integer;
+    Proporcion: single;
+  end;
+
   TCoord = record
     E,N: string;
   end;
-  TPos = record
-    X,Y: integer;
-  end;
+ 
   //el registro de parámetros:
   TParametros = record
     TotalPuntos,
     AnchoPBox,
     AltoPBox: integer;
-    Coord: array of TPos;
+    Coord: array of TPoint;
   end;
 
   TPoligono = class
     TotalPuntos,            //el total de puntos del polígono
     AltoPantalla,           //alto (pixeles) del paintbox-margen Y
     AnchoPantalla,          //ancho (pixeles) del paintbox-margen X
-    EspAlto,                //la diferencia entre paintbox.alto-poligono.alto
-    EspAncho,               //la diferencia entre paintbox.ancho-poligono.ancho
-    DibAltoY,               //el alto del dibujo
-    DibAnchoX,              //el ancho del dibujo
     AnchoPaintBox,          //ancho (pixeles) del paintbox
     AltoPaintBox,           //alto (pixeles) del paintbox
-    MargenX,                //margen X de polígono en pantalla
-    MargenY,                //margen Y de polígono en pantalla
-    MedioX,
-    MedioY,
-    PoliMayorX,             //valor máximo real X del polígono
-    PoliMayorY,             //valor mínimo real X del polígono
-    PoliMenorX,             //valor máximo real Y del polígono
-    PoliMenorY,             //valor mínimo real Y del polígono
+    MedioX,                 //punto de inicio X (pixeles) para centrar polígono
+    MedioY,                 //punto de inicio Y (pixeles) para centrar polígono
     PoliAncho,              //el ancho real del polígono
     PoliAlto: integer;      //el alto real del polígono
     FProp: double;          //factor de proporción
     Origen,
     Destino: TRect;
+    PoliMayor,              //valor máximo real X e Y del polígono
+    PoliMenor,              //valor mínimo real X e Y del polígono
+    Margen,                 //margen X e Y de polígono en pantalla
+    EsqIzq,                 //rango de coords donde se enmarcarán los dibujos
+    EsqDer: TPoint;         //
     ImgCNum,ImgSNum: TBitmap;
     PtoDib: array of TPoint;
     public
       constructor CrearPoligono(Param: TParametros);
-      procedure CopiarImagen(CnvOrg,CnvDst: TCanvas);
-      procedure PegarImagen(Canv: TCanvas; Opc: boolean);
-      function  CoordGeoACanvas(Coord: integer; Opc: byte): integer;
+      procedure   CopiarImagen(CnvOrg,CnvDst: TCanvas);
+      procedure   PegarImagen(Canv: TCanvas; Opc: boolean);
+      function    CoordGeoACanvas(Coord: integer; Opc: byte): integer;
+      function    CoordCanvasAGeo(Coord: integer; Opc: byte): integer;
+      procedure   ObtenerRangoCoord(var Rng: TRango);
     private
 
   end;
@@ -82,34 +83,39 @@ constructor TPoligono.CrearPoligono(Param: TParametros);
 var
   I: integer;
 begin
-  MargenX:=100;   // Estos márgenes son para escribir las coordenadas de las
-  MargenY:=40;    // cuadrículas
+  Margen.X:=50;   // Estos márgenes son para escribir las coordenadas de las
+  Margen.Y:=20;    // cuadrículas
   //dimensiones del paintbox donde se dibujará el polígono:
   AnchoPaintBox:=Param.AnchoPBox;
   AltoPaintBox:=Param.AltoPBox;
-  AnchoPantalla:=AnchoPaintBox-MargenX;
-  AltoPantalla:=AltoPaintBox-MargenY;
+  AnchoPantalla:=AnchoPaintBox-(Margen.X*2);
+  AltoPantalla:=AltoPaintBox-(Margen.Y*2);
+  //las esquinas del cuadro:
+  EsqIzq.X:=Margen.X-1;
+  EsqIzq.Y:=Margen.Y-1;
+  EsqDer.X:=AnchoPaintBox-EsqIzq.X-1;
+  EsqDer.Y:=AltoPaintBox-EsqIzq.Y-1;
   //se crean los bitmaps para guardar las imágenes temporales de polígonos:
   ImgCNum:=TBitmap.Create;
   ImgSNum:=TBitmap.Create;
   ImgCNum.SetSize(AnchoPaintBox,AltoPaintBox);
   ImgSNum.SetSize(AnchoPaintBox,AltoPaintBox);
   //se determina las coords mayores y menores del listado de puntos (X e Y):
-  PoliMayorX:=0;
-  PoliMayorY:=0;
-  PoliMenorX:=Param.Coord[0].X;
-  PoliMenorY:=Param.Coord[0].Y;
+  PoliMayor.X:=0;
+  PoliMayor.Y:=0;
+  PoliMenor.X:=Param.Coord[0].X;
+  PoliMenor.Y:=Param.Coord[0].Y;
   TotalPuntos:=Param.TotalPuntos;
   for I:=0 to TotalPuntos-1 do
   begin
-    if PoliMayorX<Param.Coord[I].X then PoliMayorX:=Param.Coord[I].X;
-    if PoliMayorY<Param.Coord[I].Y then PoliMayorY:=Param.Coord[I].Y;
-    if PoliMenorX>Param.Coord[I].X then PoliMenorX:=Param.Coord[I].X;
-    if PoliMenorY>Param.Coord[I].Y then PoliMenorY:=Param.Coord[I].Y;
+    if PoliMayor.X<Param.Coord[I].X then PoliMayor.X:=Param.Coord[I].X;
+    if PoliMayor.Y<Param.Coord[I].Y then PoliMayor.Y:=Param.Coord[I].Y;
+    if PoliMenor.X>Param.Coord[I].X then PoliMenor.X:=Param.Coord[I].X;
+    if PoliMenor.Y>Param.Coord[I].Y then PoliMenor.Y:=Param.Coord[I].Y;
   end;
   //se determinan las dimensiones del polígono:
-  PoliAncho:=PoliMayorX-PoliMenorX;
-  PoliAlto:=PoliMayorY-PoliMenorY;
+  PoliAncho:=PoliMayor.X-PoliMenor.X;
+  PoliAlto:=PoliMayor.Y-PoliMenor.Y;
   if PoliAncho>PoliAlto then FProp:=AltoPantalla/PoliAncho
                         else FProp:=AltoPantalla/PoliAlto;
   MedioX:=Round((AnchoPantalla-(PoliAncho*FProp))/2);
@@ -142,8 +148,61 @@ end;
 function TPoligono.CoordGeoACanvas(Coord: Integer; Opc: byte): integer;
 begin
   if Opc=1 then
-    result:=Round((Coord-PoliMenorX)*FProp)+MedioX+(MargenX div 2)
-  else result:=Round((Coord-PoliMenorY)*FProp)+MedioY+(MargenY);
+    Result:=Round((Coord-PoliMenor.X)*FProp)+MedioX+(Margen.X)
+  else Result:=Round((Coord-PoliMenor.Y)*FProp)+MedioY+(Margen.Y);
+end;
+
+function TPoligono.CoordCanvasAGeo(Coord: integer; Opc: byte): integer;
+begin
+  if Opc=1 then
+    Result:=Round(Coord*AltoPantalla/FProp)
+  else Result:=Round(Coord*AltoPantalla/FProp);
+end;
+
+procedure TPoligono.ObtenerRangoCoord(var Rng: TRango);
+var
+  CoordGeo,CoordCnv: TPoint;
+begin
+  //la primera coord geográfica X:
+  CoordGeo.X:=PoliMenor.X;
+  CoordCnv.X:=1;
+  while CoordCnv.X>=0 do
+  begin
+    CoordCnv.X:=CoordGeoACanvas(CoordGeo.X,1);
+    CoordGeo.X:=CoordGeo.X-1;
+  end;
+  Rng.Inicio.X:=CoordGeo.X;
+  //la primera coord geográfica Y:
+  CoordGeo.Y:=PoliMenor.Y;
+  CoordCnv.Y:=1;
+  while CoordCnv.Y>=0 do
+  begin
+    CoordCnv.Y:=CoordGeoACanvas(CoordGeo.Y,2);
+    CoordGeo.Y:=CoordGeo.Y-1;
+  end;
+  Rng.Inicio.Y:=CoordGeo.Y;
+  //la última coord geográfica X:
+  CoordGeo.X:=PoliMayor.X;
+  CoordCnv.X:=1;
+  while CoordCnv.X<Poligono.AnchoPaintBox do
+  begin
+    CoordCnv.X:=CoordGeoACanvas(CoordGeo.X,1);
+    CoordGeo.X:=CoordGeo.X+1;
+  end;
+  Rng.Fin.X:=CoordGeo.X;
+  //la última coord geográfica Y:
+  CoordGeo.Y:=PoliMayor.Y;
+  CoordCnv.Y:=1;
+  while CoordCnv.Y<Poligono.AltoPaintBox do
+  begin
+    CoordCnv.Y:=CoordGeoACanvas(CoordGeo.Y,2);
+    CoordGeo.Y:=CoordGeo.Y+1;
+  end;
+  Rng.Fin.Y:=CoordGeo.Y;
+  //los demás cálculos:
+  Rng.Ancho:=Rng.Fin.X-Rng.Inicio.X;
+  Rng.Alto:=Rng.Fin.Y-Rng.Inicio.Y;
+  Rng.Proporcion:=Rng.Alto/Poligono.AltoPaintBox;
 end;
 
 //********* Fin clase TPoligono ******************//

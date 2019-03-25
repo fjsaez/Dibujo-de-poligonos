@@ -95,8 +95,8 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>8202</VerInfo_Locale>
         <Icon_MainIcon>DibPoligono_Icon1.ico</Icon_MainIcon>
-        <VerInfo_Keys>CompanyName=CSNASA;FileDescription=Aplicación que dibuja un polígono dadas sus coordenadas;FileVersion=1.0.0.0;InternalName=DibPoligono.exe;LegalCopyright=;LegalTrademarks=;OriginalFilename=DibPoligono.exe;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=Dibujo de polígono a partir de coordenadas en archivo .CSV;Autor=Ing. Francisco Sáez</VerInfo_Keys>
-        <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
+        <VerInfo_Keys>CompanyName=CSNASA;FileDescription=Aplicación que dibuja un polígono dadas sus coordenadas;FileVersion=1.0.1.0;InternalName=DibPoligono.exe;LegalCopyright=;LegalTrademarks=;OriginalFilename=DibPoligono.exe;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.1.0;Comments=Dibujo de polígono a partir de coordenadas en archivo .CSV;Autor=Ing. Francisco Sáez</VerInfo_Keys>
+        <VerInfo_Release>1</VerInfo_Release>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -134,8 +134,10 @@
                     <Source Name="MainSource">DibPoligono.dpr</Source>
                 </Source>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="C:\Program Files\CData\CData FireDAC Components for JSON\vcl25\delphi\win32\CData.JSONDsgn.D25.bpl">CData Software, Inc. - JSON Data Provider 2017 - www.cdata.com</Excluded_Packages>
-                    <Excluded_Packages Name="C:\Program Files\CData\CData FireDAC Components for xBase\vcl25\delphi\win32\CData.xBaseDsgn.D25.bpl">CData Software, Inc. - xBase Data Provider 2017 - www.cdata.com</Excluded_Packages>
+                    <Excluded_Packages Name="C:\Users\Public\Documents\Embarcadero\Studio\19.0\Bpl\AbbreviaFMXDDesign250.bpl">TurboPack Abbrevia FMX Designtime Delphi package</Excluded_Packages>
+                    <Excluded_Packages Name="C:\Users\Public\Documents\Embarcadero\Studio\19.0\Bpl\LockBoxVCLDD250.bpl">TurboPack LockBox Delphi Vcl designtime package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k250.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp250.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">

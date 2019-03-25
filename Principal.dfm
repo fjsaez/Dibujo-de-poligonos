@@ -22,6 +22,7 @@ object FPrinc: TFPrinc
     Top = 42
     Width = 726
     Height = 410
+    Cursor = crCross
     ParentCustomHint = False
     Align = alClient
     Color = clWhite
@@ -34,11 +35,12 @@ object FPrinc: TFPrinc
     ParentFont = False
     ParentShowHint = False
     ShowHint = False
+    OnMouseMove = PB1MouseMove
     OnPaint = PB1Paint
-    ExplicitLeft = 8
-    ExplicitTop = 56
-    ExplicitWidth = 105
-    ExplicitHeight = 105
+    ExplicitLeft = 64
+    ExplicitTop = 173
+    ExplicitWidth = 630
+    ExplicitHeight = 249
   end
   object Panel: TPanel
     Left = 0
@@ -82,7 +84,7 @@ object FPrinc: TFPrinc
       OnClick = SBListaClick
     end
     object CBNumPtos: TCheckBox
-      Left = 352
+      Left = 520
       Top = 13
       Width = 129
       Height = 17
@@ -93,6 +95,16 @@ object FPrinc: TFPrinc
       TabOrder = 0
       Visible = False
       OnClick = CBNumPtosClick
+    end
+    object ChBPuntero: TCheckBox
+      Left = 303
+      Top = 13
+      Width = 106
+      Height = 17
+      Caption = 'Puntero del rat'#243'n'
+      TabOrder = 1
+      Visible = False
+      OnClick = ChBPunteroClick
     end
   end
   object SBar: TStatusBar
@@ -106,13 +118,16 @@ object FPrinc: TFPrinc
         Width = 200
       end
       item
-        Width = 230
+        Width = 220
       end
       item
-        Width = 300
+        Width = 180
       end
       item
-        Width = 300
+        Width = 180
+      end
+      item
+        Width = 100
       end
       item
         Width = 150
